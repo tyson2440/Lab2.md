@@ -243,20 +243,23 @@ Configured UL symbol share (%) = Configured UL symbols ÷ Total symbols × 100
 ```
 
 For two patterns, sum the counts and durations of both patterns before calculating the share. These are symbol-count shares of the common configuration, not exact airtime measurements or measured throughput shares.
+<img width="2365" height="1272" alt="balanced_tdd_allocation" src="https://github.com/user-attachments/assets/0a91c2d1-be20-417e-8184-cd046955180e" />
+<img width="2365" height="1272" alt="dl_heavy_tdd_allocation" src="https://github.com/user-attachments/assets/4c59faf6-57d6-4416-8e12-58e485706a03" />
 
 | TDD setting | Repeating duration (ms) | Total reference slots | DL symbols | UL symbols | Flexible symbols | Configured UL symbol share (%) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| DL-heavy | | | | | | |
-| Balanced | | | | | | |
+| DL-heavy | 5 | 10 | 104 | 32 | 4| 22.9% |
+| Balanced | 2.5 | 5 | 34 | 32 | 4 | 45.7% |
 
 Next, count the symbols over the **same 5 ms interval** shown in your diagrams. Multiply each per-sequence count by the number of complete repetitions in 5 ms. For these captures, 5 ms contains a whole number of repetitions for both configurations.
 
 | TDD setting | Repeating duration (ms) | Repetitions in 5 ms | DL symbols in 5 ms | UL symbols in 5 ms | Flexible symbols in 5 ms |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| DL-heavy | | | | | |
-| Balanced | | | | | |
+| DL-heavy | 5 | 1 | 104 | 32 | 4 |
+| Balanced | 2.5 | 2 | 68| 64 | 8 |
 
 **Question:** Can two patterns have the same UL symbol count per period but provide different numbers of UL symbols per unit time? Explain using your two tables.
+Yes, both configurations may have the same number of UL symbols in each pattern, but they do not provide the same uplink capacity over time because their repetition periods are different. The Balanced pattern repeats every 2.5 ms, while DL-heavy repeats every 5 ms, allowing Balanced to provide twice as many UL symbols within 5 ms (64 instead of 32). As a result, Balanced has a higher uplink symbol share of 45.7%, compared to 22.9% for DL-heavy.
 
 ### 4.5 Connect SIB1 to the Performance Results
 
@@ -360,13 +363,13 @@ Record the following information from one packet:
 
 | Item | Value |
 | --- | --- |
-| Scenario capture filename | |
-| Packet number | |
-| Outer source IP | |
-| Outer destination IP | |
-| Inner source IP | |
-| Inner destination IP | |
-| TEID | |
+| Scenario capture filename | scenario-b-dl-heavy-uplink |
+| Packet number | 2065 |
+| Outer source IP | 192.168.70.129 |
+| Outer destination IP | 192.168.70.134 |
+| Inner source IP | 10.0.0.6 |
+| Inner destination IP | 192.168.70.135 |
+| TEID |0x00000012 (18) |
 
 Meaning:
 
@@ -375,6 +378,8 @@ Meaning:
 - **TEID:** Identifies the GTP-U tunnel at the receiving endpoint.
 
 Take one screenshot showing the selected packet and these fields.
+<img width="1917" height="1078" alt="image" src="https://github.com/user-attachments/assets/357edb91-4939-4c30-89a9-8e791c881b35" />
+<img width="1917" height="1078" alt="image" src="https://github.com/user-attachments/assets/3a3d6e49-2bc9-4384-9a57-486699e27354" />
 
 > Some GTP packets are echo or control-related packets. Select one that contains an inner IPv4 packet.
 
@@ -394,14 +399,22 @@ Record the number of displayed packets:
 
 | Scenario | Displayed TCP retransmissions |
 | --- | ---: |
-| A | |
-| B | |
-| C | |
+| A | 14 |
+| B | 12 |
+| C | 12 |
 
 > Report the number displayed by Wireshark using the specified filter. Counts may vary with Wireshark analysis settings. Include screenshots showing the filter and displayed count for each scenario. The filter includes any TCP flows that Wireshark can decode in the capture; a displayed retransmission is not, by itself, proof of loss in the UDP test.
+>
+a)
+<img width="1917" height="428" alt="image" src="https://github.com/user-attachments/assets/2c96b376-5386-445d-a57e-b3cc9554dcf4" />
+b)
+<img width="1917" height="422" alt="image" src="https://github.com/user-attachments/assets/3ffc6fcb-987b-401f-b375-56713e309425" />
+c)
+<img width="1917" height="417" alt="image" src="https://github.com/user-attachments/assets/ec74ceac-d25e-43cf-b04c-2598375aad49" />
 
 **Question:** Do these TCP retransmissions directly represent lost UDP performance packets?
 
+No. TCP retransmissions do not directly represent lost UDP performance packets. The performance traffic uses UDP, while TCP retransmissions belong to a separate TCP control connection used by iperf3.
 ## 10. Task 8 — RTT and Packet Interval
 
 Use a **scenario capture** for both parts of this task.
@@ -418,7 +431,8 @@ Select one packet from the iperf3 TCP control connection and record its ACK RTT:
 
 | Scenario | Packet number | Example TCP ACK RTT |
 | --- | ---: | --- |
-| A, B, or C | | |
+| A| 18.48 | 219 ms|
+<img width="1917" height="1078" alt="image" src="https://github.com/user-attachments/assets/fdabebb0-edb8-4e7f-b7dd-89f28b4279d8" />
 
 This value is the RTT of the TCP control connection. It is not the RTT of the UDP data packets.
 
@@ -438,7 +452,8 @@ Record the scenario, display filter, packet numbers, and time interval.
 
 | Scenario | Display filter | Packet numbers | Time interval |
 | --- | --- | --- | --- |
-| | | | |
+| A | udp && ip.src == 192.168.70.135 && ip.dst == 10.0.0.6 | 1892 → 1896 | 1.045 ms |
+<img width="1917" height="1078" alt="image" src="https://github.com/user-attachments/assets/8d5de481-e457-49ff-8f6a-b625824088f7" />
 
 **Note:** The time interval depends on the applied display filter. Make sure the selected packets are distinct data packets, not duplicated observations from different capture points. Do not use their interval to infer the TDD slot pattern.
 
@@ -447,13 +462,36 @@ Record the scenario, display filter, packet numbers, and time interval.
 Answer each question in two or three sentences:
 
 1. Does Scenario A use a TDD setting that matches its traffic direction?
+
+Yes, Scenario A uses a DL-heavy configuration for downlink traffic. This is suitable because most radio resources are assigned to downlink transmission, providing more opportunities to send data.
+
 2. Why is Scenario B expected to have limited uplink resources? Cite a parameter or count from the DL-heavy SIB1 reference configuration.
+
+Scenario B has limited uplink resources because its DL-heavy configuration prioritizes downlink transmission. The SIB1 reference shows only 2 uplink slots out of 10 total slots, resulting in an uplink symbol share of approximately 22.86%.
+
 3. How much does uplink throughput change from B to C?
+
+Uplink throughput increases from 109.117 Mbps in Scenario B to 124.416 Mbps in Scenario C. This represents an increase of approximately 15.30 Mbps, or 14.02%.
+
 4. What negative result, if any, is visible in C? Support your answer with packet loss or jitter values.
+
+Scenario C shows higher packet loss and jitter than Scenario B. Packet loss increases from 0.2357% to 2.1339%, while jitter rises from 0.1162 ms to 0.1620 ms.
+
 5. Why can increasing UL resources improve uplink throughput?
+
+More uplink resources give the UE additional opportunities to transmit data to the network. This allows more data to be sent within the same period, potentially increasing overall throughput.
+
 6. Is adding more UL resources always the best solution? Explain using throughput and packet loss.
+
+No, because increasing uplink resources does not always improve overall network performance. Scenario C achieves 14.02% higher throughput, but packet loss also increases from 0.2357% to 2.1339%, showing a trade-off between speed and reliability.
+
 7. Suggest one simple follow-up test that could improve throughput without producing too much packet loss.
+
+A useful follow-up test would be to keep the Balanced TDD configuration and gradually adjust the iperf3 sending rate using the -b option. This could help find a suitable rate that maintains good throughput while reducing packet loss.
+
 8. What can the configuration captures tell you that the iperf3 JSON cannot? Why are separately recorded configuration captures not direct proof of the configuration during an earlier test?
+
+Configuration captures reveal network parameters such as TDD periodicity, slot allocation, subcarrier spacing, and uplink/downlink symbols, which are not included in iperf3 JSON results. Since these captures were recorded separately, they can serve as reference configurations but cannot confirm exactly which settings were active during the original performance tests.
 
 ## 12. Submission Checklist
 
